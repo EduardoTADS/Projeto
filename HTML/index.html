@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Bancada manutenção</title>  
+</head>
+<style>
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    width: 50%;
+    margin: 2rem auto;
+    background-color:lightblue;
+}
+
+div {
+    display: -moz-grid-line;
+    -ms-grid-columns: 1fr;
+    background-color:whitesmoke;
+    padding: 0.7rem;
+    border-radius: 9px;
+}
+
+input, button {
+    width: 98%;
+    padding: 0.6rem 0.4rem;
+    margin: 0.4rem;
+    border-radius: 8px;
+    background-color: transparent;
+}
+
+button {
+    text-decoration: none;
+    border: none;
+    display: block;
+    cursor: pointer;
+    text-align: center;
+}
+
+.success {
+    background-color:cadetblue;
+    color: rgb(0, 0, 0);
+}
+
+.delete {
+    background-color: rgb(231, 27, 27);
+    color: rgb(255, 255, 255);
+    border-radius: 5px;
+}
+
+
+table {
+    background-color: whitesmoke;
+    margin-top: .9rem;
+    border-collapse: collapse;
+    width: 100%;
+    border-radius: 8px;
+}
+
+th, td {
+    padding: 5px 25px;
+    text-align: left;
+    border-bottom: 1px solid transparent;
+}
+</style>
+<body>
+    <div>
+        <input type="text" id="name" placeholder="Modelo Impressora" autocomplete="off">
+        <input type="text" id="licence" placeholder="S/N da Impressora" autocomplete="off">
+        <button id="send" class="success">Registrar</button>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Impressora</th>
+                <th>Nro Série</th>
+                <th>Entrada</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="garage"></tbody>
+    </table>
+</body>
+<script>
+    (function(){
+    const $ = q => document.querySelector(q);
+
+    function convertPeriod(mil) {
+        var min = Math.floor(mil / 60000);
+        var sec = Math.floor((mil % 60000) / 1000);
+        return `${min}m e ${sec}s`;
+    };
+
+    function renderGarage () {
+        const garage = getGarage();
+        $("#garage").innerHTML = "";
+        garage.forEach(i => addImpToGarage(i))
+    };
+
+    function addImpToGarage (imp) {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${imp.name}</td>
+            <td>${imp.licence}</td>
+            <td data-time="${imp.time}">
+                ${new Date(imp.time)
+                        .toLocaleString('pt-BR', { 
+                            hour: 'numeric', minute: 'numeric' 
+                })}
+            </td>
+            <td>
+                <button class="delete">x</button>
+            </td>
+        `;
+
+        $("#garage").appendChild(row);
+    };
+
+    function checkOut(info) {
+        let period = new Date() - new Date(info[2].dataset.time);
+        period = convertPeriod(period);
+
+        const licence = info[1].textContent;
+        const msg = `A Impressora ${info[0].textContent} S/N ${licence} permaneceu por ${period} em bancada. \n\n Deseja encerrar?`;
+
+        if(!confirm(msg)) return;
+        
+        const garage = getGarage().filter(i => i.licence !== licence);
+        localStorage.garage = JSON.stringify(garage);
+        
+        renderGarage();
+    };
+
+    const getGarage = () => localStorage.garage ? JSON.parse(localStorage.garage) : [];
+
+    renderGarage();
+    $("#send").addEventListener("click", e => {
+        const name = $("#name").value;
+        const licence = $("#licence").value;
+
+        if(!name || !licence){
+            alert("Os campos são obrigatórios.");
+            return;
+        }   
+
+        const impressora = { name, licence, time: new Date() };
+
+        const garage = getGarage();
+        garage.push(impressora);
+
+        localStorage.garage = JSON.stringify(garage);
+
+        addImpToGarage(impressora);
+        $("#name").value = "";
+        $("#licence").value = "";
+    });
+
+    $("#garage").addEventListener("click", (e) => {
+        if(e.target.className === "delete")
+            checkOut(e.target.parentElement.parentElement.cells);
+    });
+})()
+</script>
+
+</html>
