@@ -92,9 +92,10 @@ th, td {
     const $ = q => document.querySelector(q);
 
     function convertPeriod(mil) {
-        var min = Math.floor(mil / 60000);
-        var sec = Math.floor((mil % 60000) / 1000);
-        return `${min}m e ${sec}s`;
+        var hr = Math.floor(mil / 3600000);
+        var min = Math.floor((mil % 3600000)/60000);
+        var sec = Math.floor((mil % 60000)/1000);
+        return `${hr}Hrs e ${min}m e ${sec}s`;
     };
 
     function renderGarage () {
